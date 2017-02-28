@@ -11,8 +11,34 @@ var osenv    = require('osenv')
 var duplexer = require('duplexer')
 var concat   = require('concat-stream')
 
+var Transform = require('stream').Transform;
+
 var spawn = chpro.spawn
 if (os.type() === 'Windows_NT') spawn = require('win-spawn')
+
+var SkipLines = function(lines) {
+  this.toskip = lines;
+  Transform.call(this,{});
+};
+
+require('util').inherits(SkipLines,Transform);
+
+SkipLines.prototype._transform = function(chunk,enc,cb) {
+  if (this.toskip < 0) {
+    this.push(chunk);
+    cb();
+    return;
+  }
+  var data = chunk.toString();
+  while (this.toskip > 0 && data.indexOf('\n') >= 0) {
+    this.toskip--;
+    data = data.substring(data.indexOf('\n')+1);
+  };
+  if (this.toskip === 0) {
+    this.push(data);
+  }
+  cb();
+};
 
 module.exports = function (options) {
 
@@ -33,7 +59,7 @@ module.exports = function (options) {
   var write = fs.createWriteStream(filename)
     .on('close', function () {
       var child = spawn(require.resolve('j/bin/j.njs'), spawnArgs)
-      child.stdout.pipe(csv.createStream(options))
+      child.stdout.pipe(new SkipLines((options.startRow || 1) - 1)).pipe(csv.createStream(options))
         .pipe(through(function (data) {
           var _data = {}
           for(var k in data) {
