@@ -45,7 +45,7 @@ module.exports = function (options) {
   var read = through()
   var duplex
 
-  var filename = path.join(osenv.tmpdir(), '_'+Date.now())
+  var filename = path.join(osenv.tmpdir(), '_'+require('node-uuid').v4())
 
   var spawnArgs = []
 
