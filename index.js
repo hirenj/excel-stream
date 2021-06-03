@@ -40,7 +40,7 @@ SkipLines.prototype._transform = function(chunk,enc,cb) {
   cb();
 };
 
-module.exports = function (options) {
+module.exports = function (options={}) {
 
   var read = through()
   var duplex
